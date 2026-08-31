@@ -3,6 +3,7 @@
 .env.local
 agents.local.json
 *.local.json
+*.local.html
 
 # 3D avatars: VRM licenses often forbid redistribution — bring your own.
 # (Keep this ignore; document how to add one in assets/avatars/README.md.)

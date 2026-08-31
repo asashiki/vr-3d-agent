@@ -72,10 +72,39 @@ test('model JSON fences parse and output is normalized', () => {
   const value=extractJson('```json\n{"say":"ok","commands":[]}\n```'); assert.equal(value.say,'ok');
   assert.equal(normalizePlan({...value,emotion:'invalid',avatarAction:'invalid'}).emotion,'neutral');
 });
+test('normalizePlan coerces OpenAI-compatible alias command shapes', () => {
+  const plan=normalizePlan({
+    say:'放一棵树', emotion:'happy', avatarAction:'Clapping',
+    commands:[{action:'place_asset',asset:'tree_round_01',position:{x:0,y:.04,z:-.12},scale:1}]
+  });
+  assert.equal(plan.commands[0].tool,'place_asset');
+  assert.equal(plan.commands[0].assetId,'tree_round_01');
+  assert.equal(plan.commands[0].instanceId,'tree_round-1');
+  assert.deepEqual(plan.commands[0].position,[0,.04,-.12]);
+  assert.deepEqual(plan.commands[0].scale,[1,1,1]);
+});
 test('neutral STT and TTS adapters use server-only provider credentials', async () => {
   const calls=[];const fakeFetch=async(url,options)=>{calls.push({url,options});return url.endsWith('/audio/transcriptions')?new Response(JSON.stringify({text:'你好'}),{status:200,headers:{'content-type':'application/json'}}):new Response(Uint8Array.from([1,2,3]),{status:200});};
   const env={OPENAI_API_KEY:'server-secret',OPENAI_BASE_URL:'https://provider.test/v1',STT_PROVIDER:'openai',TTS_PROVIDER:'openai'};
   assert.equal((await createSTTProvider(env,fakeFetch)({audio:Buffer.from([1]),mimeType:'audio/webm'})).text,'你好');
   assert.equal((await createTTSProvider(env,fakeFetch)({text:'你好'})).audioBase64,'AQID');
   assert.equal(calls.length,2);assert.match(calls[0].options.headers.authorization,/server-secret/);assert.equal(JSON.parse(calls[1].options.body).response_format,'mp3');
+});
+test('MiniMax TTS adapter posts to T2A v2 and decodes hex audio', async () => {
+  const calls=[];
+  const fakeFetch=async(url,options)=>{
+    calls.push({url,options});
+    return new Response(JSON.stringify({
+      base_resp:{status_code:0,status_msg:'success'},
+      data:{audio:Buffer.from([1,2,3]).toString('hex')}
+    }),{status:200,headers:{'content-type':'application/json'}});
+  };
+  const env={TTS_PROVIDER:'minimax',MINIMAX_API_KEY:'mm-secret',MINIMAX_VOICE_ID:'MaiClone'};
+  const result=await createTTSProvider(env,fakeFetch)({text:'你好花园'});
+  assert.equal(result.provider,'minimax');
+  assert.equal(result.mimeType,'audio/mpeg');
+  assert.equal(result.audioBase64,'AQID');
+  assert.match(calls[0].url,/t2a_v2/);
+  assert.match(calls[0].options.headers.authorization,/mm-secret/);
+  assert.equal(JSON.parse(calls[0].options.body).voice_setting.voice_id,'MaiClone');
 });
