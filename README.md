@@ -1,3 +1,7 @@
+## 核心演示
+
+https://github.com/user-attachments/assets/76075243-30da-41de-9445-d91f76f6740d
+
 # Pocket World Agent / 小世界共创 Agent
 
 一个比赛可演示的 Quest WebXR 空间共创 Agent。Mira 出现在现实空间中，把自然语言转换成经过校验的场景工具调用，在可移动的 World Tray 上创建、修改、检查和保存 3D 小世界。
@@ -21,7 +25,7 @@ Copy-Item .env.example .env
 npm start
 ```
 
-## 90 秒核心演示
+## 功能说明
 
 1. 点击“进入 MR”或“桌面预览”。
 2. 点击“搭建默认花园”，或输入：`在我面前搭一个治愈系小花园，有一棵树、一张长椅、两盏灯和一些花。`
