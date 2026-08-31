@@ -87,6 +87,7 @@ Quest 真机截图、录屏、帧率和 Passthrough 交互仍需要连接真实�
 - [第三方声明](THIRD_PARTY_NOTICES.md)
 - [素材清单](ASSET_MANIFEST.json)
 
+(本项目测试过程中损失了一副眼镜)
 ## License
 
 代码基于 [andrewsegas/incarna](https://github.com/andrewsegas/incarna)，遵循 MIT License 并保留原作者 Attribution。VRM 模型和场景资产的许可边界见独立文件；不要将模型文件误认为项目 MIT 代码的一部分。
