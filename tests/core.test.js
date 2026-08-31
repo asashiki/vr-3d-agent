@@ -115,6 +115,12 @@ test('Quest STT keeps a server fallback for an older browser setting', async () 
   assert.equal((await provider({audio:Buffer.from([1])})).text,'移动到这边');
   assert.equal(createSTTProvider({STT_PROVIDER:'disabled',STT_API_KEY:'stt-secret'},fakeFetch),null);
 });
+test('DeepSeek chat keys are not sent to OpenAI Whisper', async () => {
+  const calls=[];
+  const fakeFetch=async(url)=>{calls.push(url);return new Response(JSON.stringify({text:'nope'}),{status:200});};
+  createSTTProvider({STT_PROVIDER:'auto',OPENAI_API_KEY:'deepseek-key',OPENAI_BASE_URL:'https://api.deepseek.com/v1'},fakeFetch);
+  assert.equal(calls.length,0);
+});
 test('MiniMax TTS adapter posts to T2A v2 and decodes hex audio', async () => {
   const calls=[];
   const fakeFetch=async(url,options)=>{
