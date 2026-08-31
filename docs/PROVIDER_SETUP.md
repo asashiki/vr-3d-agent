@@ -43,7 +43,16 @@ Provider timeout, invalid JSON and HTTP failures automatically return a determin
 
 ## STT
 
-`STT_PROVIDER=browser` keeps recognition entirely in the browser. `STT_PROVIDER=openai` records while the user holds the mic/Quest trigger, uploads only that audio to the project server, and lets the server call the configured Whisper-compatible endpoint. The API key remains server-side.
+Quest Browser 不提供 Chrome 桌面端的 `SpeechRecognition` API，因此 Quest 语音必须使用 `MediaRecorder → /api/stt → Whisper-compatible endpoint`。推荐：
+
+```env
+STT_PROVIDER=auto
+STT_API_KEY=...
+STT_BASE_URL=https://api.openai.com/v1
+STT_MODEL=whisper-1
+```
+
+`STT_API_KEY` 未设置时会备用 `OPENAI_API_KEY`；`STT_BASE_URL` 未设置时会备用 `OPENAI_BASE_URL`。旧配置中的 `STT_PROVIDER=browser` 在存在服务端密钥时也会自动保留 Quest 服务端后备，不再直接报“浏览器没有语音识别”。仅上传用户按住 A/X 期间的录音，密钥始终留在服务端。如需完全关闭，使用 `STT_PROVIDER=disabled`。
 
 ## TTS and lip sync
 

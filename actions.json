@@ -5,6 +5,9 @@
     { "tag": "surprised", "vrma": "Surprised", "face": "surprised", "desc": "brief surprise", "status": "ok" },
     { "tag": "clap", "vrma": "Clapping", "face": "happy", "desc": "celebrate a completed scene", "status": "ok" },
     { "tag": "lookaround", "vrma": "LookAround", "desc": "look around the world tray", "status": "ok" },
-    { "tag": "bye", "vrma": "Goodbye", "desc": "wave goodbye", "status": "ok" }
+    { "tag": "bye", "vrma": "Goodbye", "desc": "wave goodbye", "status": "ok" },
+    { "tag": "jump", "vrma": "Jump", "face": "happy", "desc": "small celebratory jump", "status": "ok" },
+    { "tag": "stepforward", "desc": "move one safe step toward the user", "status": "ok" },
+    { "tag": "stepback", "desc": "move one safe step away from the user", "status": "ok" }
   ]
 }
