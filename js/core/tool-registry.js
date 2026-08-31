@@ -5,12 +5,12 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const ACTIONS = ['Relax', 'Thinking', 'Surprised', 'Clapping', 'LookAround', 'Goodbye'];
+  const ACTIONS = ['Relax', 'Thinking', 'Surprised', 'Clapping', 'LookAround', 'Goodbye', 'Jump', 'StepForward', 'StepBack'];
   const TOOLS = ['list_assets','inspect_scene','place_asset','move_asset','rotate_asset','scale_asset','remove_asset','duplicate_asset','set_color','clear_scene','undo','save_scene','load_scene','play_avatar_action','speak'];
   const VEC3_SCHEMA = { type:'array', minItems:3, maxItems:3, items:{ type:'number' } };
   const ID_SCHEMA = { type:'string', pattern:'^[A-Za-z0-9][A-Za-z0-9-_]{0,63}$' };
   const INSTANCE_SCHEMA = { type:'object', required:['instanceId','assetId','position','rotation','scale'], properties:{ instanceId:ID_SCHEMA, assetId:{type:'string'}, position:VEC3_SCHEMA, rotation:VEC3_SCHEMA, scale:VEC3_SCHEMA, color:{type:'string'}, locked:{type:'boolean'} } };
-  const SCENE_SCHEMA = { type:'object', required:['version','sceneId','tray','objects'], properties:{ version:{const:1}, sceneId:{type:'string'}, title:{type:'string'}, tray:{type:'object'}, objects:{type:'array',items:INSTANCE_SCHEMA} } };
+  const SCENE_SCHEMA = { type:'object', required:['version','sceneId','tray','avatar','objects'], properties:{ version:{const:1}, sceneId:{type:'string'}, title:{type:'string'}, tray:{type:'object'}, avatar:{type:'object'}, objects:{type:'array',items:INSTANCE_SCHEMA} } };
   const input = (properties={},required=[]) => ({ type:'object', additionalProperties:true, properties, required });
   const output = (properties,required=Object.keys(properties)) => ({ type:'object', additionalProperties:false, properties, required });
   const TOOL_SCHEMAS = Object.freeze({
@@ -130,7 +130,10 @@
       const instance = { instanceId: input.instanceId, assetId: input.assetId, position: [...input.position], rotation: vec3(input.rotation) ? [...input.rotation] : [0,0,0], scale: [...scale], locked: false };
       const overlap = this.overlaps(instance);
       if (overlap) return fail('SEVERE_OVERLAP', `Would overlap ${overlap.instanceId}`);
-      this.store.mutate((scene) => { scene.objects.push(instance); }, { tool: 'place_asset' });
+      this.store.mutate((scene) => {
+        scene.objects.push(instance);
+        scene.tray.visible = true;
+      }, { tool: 'place_asset' });
       return ok({ instance: { ...instance } });
     }
   }

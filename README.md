@@ -26,7 +26,7 @@ npm start
 1. 点击“进入 MR”或“桌面预览”。
 2. 点击“搭建默认花园”，或输入：`在我面前搭一个治愈系小花园，有一棵树、一张长椅、两盏灯和一些花。`
 3. 输入：`把左边的灯移到树旁边，树缩小一点，删掉右边的石头。`
-4. 用鼠标、Quest grip 或 hand pinch 移动长椅。
+4. Quest 中用手柄射线指向 Mira、托盘或物件，按住 Grip 移动，摇杆上下调整远近。
 5. 输入：`保持长椅现在的位置，保存这个场景。`
 6. 刷新页面，点击“恢复”。
 
@@ -35,13 +35,15 @@ npm start
 - Incarna 的 A-Frame、three-vrm、VRMA 动作与 WebXR 基线；
 - 单角色 Mira，AvatarSample_B 默认、AvatarSample_A 安装级 fallback；
 - 30 个程序化生成的 CC0 低多边形 GLB 和统一 Asset Catalog；
-- 可移动/缩放 World Tray、桌面/控制器/hand pinch 物件抓取；
+- Mira、World Tray 和场景物件都可用 Quest 手柄射线 + Grip 摆放；手部追踪可用 pinch 近距离抓取；
+- 托盘默认隐藏，场景生成时在角色左侧显示，可随时隐藏、归位和缩放；
 - 版本化 Scene Graph、Inspector、Undo、Save/Load；
 - 15 个白名单 Scene Tools，Schema、边界、重叠、ID、容量和稳定错误码校验；
 - `Understand → Plan → Validate → Execute → Inspect → Repair → Speak` Agent Loop；
 - 单轮最多 14 条命令，Repair 最多 2 次；
 - OpenAI-compatible、OpenClaw 和 Replay Provider；所有密钥仅在服务端；
-- 文字输入为硬功能，浏览器语音识别为增强；
+- Quest 按住 A/X 录音，经服务端 STT 转写；桌面浏览器仍可使用原生语音识别后备；
+- AI 可调用表情/VRMA 动作，并能执行 `StepForward`、`StepBack` 和 `Jump`；
 - Tool Timeline 和不依赖外部 API 的花园 Replay fixture。
 
 ## Provider 配置
@@ -50,8 +52,8 @@ npm start
 
 - `LLM_PROVIDER=openai`：`OPENAI_API_KEY`、可选 `OPENAI_BASE_URL`；
 - `LLM_PROVIDER=openclaw`：`OPENCLAW_URL`、可选 `OPENCLAW_TOKEN`；
-- `STT_PROVIDER=openai`：服务端 Whisper-compatible 转写；否则使用浏览器语音识别；
-- `TTS_PROVIDER=openai|elevenlabs`：服务端语音与口型时间轴；否则使用浏览器语音合成和有界嘴型 fallback。
+- `STT_PROVIDER=auto`：Quest 录音走服务端 Whisper-compatible 转写；没有服务端 STT 时，桌面端才尝试浏览器语音识别；
+- `TTS_PROVIDER=openai|elevenlabs|minimax`：服务端语音与口型；否则使用浏览器语音合成和有界嘴型 fallback。
 
 任何超时、非法 JSON 或网络错误都会自动降级到 Replay，不会破坏当前 Scene。详见 [Provider 设置](docs/PROVIDER_SETUP.md)。
 
@@ -63,13 +65,15 @@ npm run test:all
 
 自动测试覆盖非法 Tool、缺失 Asset、重复 Instance、越界位置、极端缩放、严重重叠、Save/Load、Undo、非法模型 JSON、Repair 上限、静态服务和离线 Replay。
 
-Quest 真机截图、录屏、帧率和 Passthrough 交互仍需要连接真实设备后人工验证；桌面通过不被表述为 Quest 通过。清单见 [Quest 验证](docs/QUEST_VALIDATION.md)，当前证据见 [测试报告](docs/TEST_REPORT.md)。桌面端按住语音键说话；按住 Shift 拖动托盘、Shift + 滚轮缩放托盘。
+Quest 真机截图、录屏、帧率和 Passthrough 交互仍需要连接真实设备后人工验证；桌面通过不被表述为 Quest 通过。手柄映射：Grip 抓取、Trigger 选择、A/X 按住说话、B 显示/隐藏托盘、Y 将 Mira 放回眼前。详见 [Quest 实机使用](docs/QUEST_DEVICE_GUIDE.md)、[Quest 验证](docs/QUEST_VALIDATION.md) 和 [测试报告](docs/TEST_REPORT.md)。
 
 ## 文档
 
 - [架构](ARCHITECTURE.md)
 - [Scene Tool Reference](docs/SCENE_TOOL_REFERENCE.md)
 - [Demo Script](docs/DEMO_SCRIPT.md)
+- [Quest 实机使用](docs/QUEST_DEVICE_GUIDE.md)
+- [Quest 验证清单](docs/QUEST_VALIDATION.md)
 - [Known Limitations](docs/KNOWN_LIMITATIONS.md)
 - [Prompt / Plan 验收对照](docs/REQUIREMENTS_AUDIT.md)
 - [模型许可](MODEL_LICENSE.md)

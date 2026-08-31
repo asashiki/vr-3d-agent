@@ -29,3 +29,7 @@ test('STT and TTS routes use injected provider adapters',()=>withServer(async(ba
   const tts=await fetch(`${base}/api/tts`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:'你好'})}).then((r)=>r.json());
   assert.equal(stt.text,'转写');assert.equal(tts.audioBase64,'AQI=');
 },{planner:null,sttProvider:async({audio})=>({text:audio.length===2?'转写':'错误',provider:'test'}),ttsProvider:async()=>({audioBase64:'AQI=',mimeType:'audio/mpeg',alignment:null,provider:'test'})}));
+test('health advertises Quest server STT when an STT key exists',()=>withServer(async(base)=>{
+  const health=await fetch(`${base}/api/health`).then((r)=>r.json());
+  assert.equal(health.services.stt,true);
+},{planner:null,env:{STT_PROVIDER:'auto',STT_API_KEY:'server-only'}}));

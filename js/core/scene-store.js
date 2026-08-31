@@ -6,11 +6,20 @@
   'use strict';
 
   const clone = (value) => JSON.parse(JSON.stringify(value));
+  const DEFAULT_TRAY = Object.freeze({ position: [-0.72, 0.5, -1.9], rotation: [0, 0, 0], scale: 0.72, visible: false });
+  const DEFAULT_AVATAR = Object.freeze({ position: [0.55, 0, -1.6], rotation: [0, -15, 0], scale: 0.72, visible: true });
+  const hydrateScene = (value) => {
+    const scene = clone(value);
+    scene.tray = { ...clone(DEFAULT_TRAY), ...(scene.tray || {}) };
+    scene.avatar = { ...clone(DEFAULT_AVATAR), ...(scene.avatar || {}) };
+    return scene;
+  };
   const defaultScene = () => ({
     version: 1,
     sceneId: `scene-${Date.now().toString(36)}`,
     title: '未命名小世界',
-    tray: { position: [0, 0.72, -1.8], rotation: [0, 0, 0], scale: 1 },
+    tray: clone(DEFAULT_TRAY),
+    avatar: clone(DEFAULT_AVATAR),
     objects: [],
     updatedAt: new Date().toISOString()
   });
@@ -26,7 +35,7 @@
     constructor(options = {}) {
       this.storage = options.storage || (typeof localStorage !== 'undefined' ? localStorage : new MemoryStorage());
       this.key = options.key || 'pocket-world.scene.v1';
-      this.scene = clone(options.initialScene || defaultScene());
+      this.scene = hydrateScene(options.initialScene || defaultScene());
       this.history = [];
       this.listeners = new Set();
       this.maxHistory = options.maxHistory || 50;
@@ -36,7 +45,7 @@
     subscribe(listener) { this.listeners.add(listener); return () => this.listeners.delete(listener); }
     emit(meta = {}) { const state = this.snapshot(); for (const listener of this.listeners) listener(state, meta); }
     validateScene(scene) {
-      return scene && scene.version === 1 && scene.tray && Array.isArray(scene.objects) &&
+      return scene && scene.version === 1 && scene.tray && scene.avatar && Array.isArray(scene.objects) &&
         scene.objects.every((item) => item && typeof item.instanceId === 'string' && typeof item.assetId === 'string');
     }
     mutate(mutator, meta = {}) {
@@ -55,13 +64,13 @@
       if (!this.validateScene(scene)) throw new Error('invalid scene graph');
       const before = this.snapshot();
       this.history.push(before);
-      this.scene = clone(scene);
+      this.scene = hydrateScene(scene);
       this.emit(meta);
       return this.snapshot();
     }
     restore(scene, meta = {}) {
       if (!this.validateScene(scene)) throw new Error('invalid scene graph');
-      this.scene = clone(scene);
+      this.scene = hydrateScene(scene);
       this.emit(meta);
       return this.snapshot();
     }
@@ -75,7 +84,7 @@
     load() {
       const raw = this.storage.getItem(this.key);
       if (!raw) return null;
-      const parsed = JSON.parse(raw);
+      const parsed = hydrateScene(JSON.parse(raw));
       if (!this.validateScene(parsed)) throw new Error('saved scene is invalid');
       this.replace(parsed, { tool: 'load_scene' });
       return this.snapshot();

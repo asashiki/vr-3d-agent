@@ -46,6 +46,19 @@ test('scene save, load and undo round-trip', () => {
   tools.execute({tool:'move_asset',instanceId:'bench',position:[.4,.04,.2]}); assert.ok(tools.execute({tool:'undo'}).ok);
   assert.deepEqual(store.scene.objects[0].position,[0,.04,0]);
 });
+test('scene state keeps a clean MR layout and hydrates older saves', () => {
+  const storage = new MemoryStorage();
+  const store = new SceneStore({ storage });
+  assert.equal(store.scene.tray.visible, false);
+  assert.deepEqual(store.scene.tray.position, [-0.72, 0.5, -1.9]);
+  assert.deepEqual(store.scene.avatar.position, [0.55, 0, -1.6]);
+  storage.setItem('pocket-world.scene.v1', JSON.stringify({
+    version:1, sceneId:'old', title:'old', tray:{position:[0,.72,-1.8],rotation:[0,0,0],scale:1}, objects:[]
+  }));
+  assert.ok(store.load());
+  assert.ok(store.scene.avatar);
+  assert.equal(store.scene.tray.visible, false);
+});
 test('garden replay creates a bounded scene and targeted follow-up', async () => {
   const { tools,store }=setup(); const loop=new AgentLoop({planner:deterministicPlan,tools});
   const first=await loop.run('在我面前搭一个治愈系小花园，有一棵树、一张长椅、两盏灯和一些花。');
@@ -72,6 +85,11 @@ test('model JSON fences parse and output is normalized', () => {
   const value=extractJson('```json\n{"say":"ok","commands":[]}\n```'); assert.equal(value.say,'ok');
   assert.equal(normalizePlan({...value,emotion:'invalid',avatarAction:'invalid'}).emotion,'neutral');
 });
+test('voice movement requests normalize to executable avatar actions', () => {
+  assert.equal(deterministicPlan({text:'往前走一步',scene:{objects:[]}}).avatarAction,'StepForward');
+  assert.equal(deterministicPlan({text:'退后一步',scene:{objects:[]}}).avatarAction,'StepBack');
+  assert.equal(deterministicPlan({text:'跳一下',scene:{objects:[]}}).avatarAction,'Jump');
+});
 test('normalizePlan coerces OpenAI-compatible alias command shapes', () => {
   const plan=normalizePlan({
     say:'放一棵树', emotion:'happy', avatarAction:'Clapping',
@@ -89,6 +107,13 @@ test('neutral STT and TTS adapters use server-only provider credentials', async 
   assert.equal((await createSTTProvider(env,fakeFetch)({audio:Buffer.from([1]),mimeType:'audio/webm'})).text,'你好');
   assert.equal((await createTTSProvider(env,fakeFetch)({text:'你好'})).audioBase64,'AQID');
   assert.equal(calls.length,2);assert.match(calls[0].options.headers.authorization,/server-secret/);assert.equal(JSON.parse(calls[1].options.body).response_format,'mp3');
+});
+test('Quest STT keeps a server fallback for an older browser setting', async () => {
+  const fakeFetch=async()=>new Response(JSON.stringify({text:'移动到这边'}),{status:200,headers:{'content-type':'application/json'}});
+  const provider=createSTTProvider({STT_PROVIDER:'browser',STT_API_KEY:'stt-secret',STT_BASE_URL:'https://stt.test/v1'},fakeFetch);
+  assert.equal(typeof provider,'function');
+  assert.equal((await provider({audio:Buffer.from([1])})).text,'移动到这边');
+  assert.equal(createSTTProvider({STT_PROVIDER:'disabled',STT_API_KEY:'stt-secret'},fakeFetch),null);
 });
 test('MiniMax TTS adapter posts to T2A v2 and decodes hex audio', async () => {
   const calls=[];

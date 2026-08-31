@@ -16,6 +16,14 @@ for(const dir of ['js','lib','tests','scripts']){
 }
 for(const file of scripts)execFileSync(process.execPath,['--check',file],{stdio:'ignore'});
 for(const json of ['ASSET_MANIFEST.json','actions.json','agents.example.json','fixtures/garden-replay.json'])JSON.parse(fs.readFileSync(path.join(root,json),'utf8'));
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+for(const required of ['id="lcontroller"','id="rcontroller"','laser-controls','data-xr-role="avatar"','id="tray-toggle-btn"','id="xr-status"']){
+  if(!html.includes(required))throw new Error(`missing Quest interaction hook: ${required}`);
+}
+const app=fs.readFileSync(path.join(root,'js/app.js'),'utf8');
+for(const required of ['abuttondown','xbuttondown','bbuttondown','ybuttondown','pocket-avatar-transform','MediaRecorder']){
+  if(!app.includes(required))throw new Error(`missing Quest app binding: ${required}`);
+}
 const avatarB=path.join(root,'assets/avatars/AvatarSample_B.vrm');
 if(fs.existsSync(avatarB)){
   const data=fs.readFileSync(avatarB);const jsonLength=data.readUInt32LE(12);const gltf=JSON.parse(data.toString('utf8',20,20+jsonLength));
