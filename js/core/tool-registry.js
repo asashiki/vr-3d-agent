@@ -7,22 +7,28 @@
 
   const ACTIONS = ['Relax', 'Thinking', 'Surprised', 'Clapping', 'LookAround', 'Goodbye'];
   const TOOLS = ['list_assets','inspect_scene','place_asset','move_asset','rotate_asset','scale_asset','remove_asset','duplicate_asset','set_color','clear_scene','undo','save_scene','load_scene','play_avatar_action','speak'];
+  const VEC3_SCHEMA = { type:'array', minItems:3, maxItems:3, items:{ type:'number' } };
+  const ID_SCHEMA = { type:'string', pattern:'^[A-Za-z0-9][A-Za-z0-9-_]{0,63}$' };
+  const INSTANCE_SCHEMA = { type:'object', required:['instanceId','assetId','position','rotation','scale'], properties:{ instanceId:ID_SCHEMA, assetId:{type:'string'}, position:VEC3_SCHEMA, rotation:VEC3_SCHEMA, scale:VEC3_SCHEMA, color:{type:'string'}, locked:{type:'boolean'} } };
+  const SCENE_SCHEMA = { type:'object', required:['version','sceneId','tray','objects'], properties:{ version:{const:1}, sceneId:{type:'string'}, title:{type:'string'}, tray:{type:'object'}, objects:{type:'array',items:INSTANCE_SCHEMA} } };
+  const input = (properties={},required=[]) => ({ type:'object', additionalProperties:true, properties, required });
+  const output = (properties,required=Object.keys(properties)) => ({ type:'object', additionalProperties:false, properties, required });
   const TOOL_SCHEMAS = Object.freeze({
-    list_assets: { input: { category: 'string?', tag: 'string?' }, output: { assets: 'Asset[]' } },
-    inspect_scene: { input: {}, output: { scene: 'SceneGraph' } },
-    place_asset: { input: { assetId: 'string', instanceId: 'string', position: 'vec3', rotation: 'vec3?', scale: 'vec3?' }, output: { instance: 'SceneObject' } },
-    move_asset: { input: { instanceId: 'string', position: 'vec3' }, output: { instance: 'SceneObject' } },
-    rotate_asset: { input: { instanceId: 'string', rotation: 'vec3' }, output: { instance: 'SceneObject' } },
-    scale_asset: { input: { instanceId: 'string', scale: 'vec3' }, output: { instance: 'SceneObject' } },
-    remove_asset: { input: { instanceId: 'string' }, output: { removed: 'string' } },
-    duplicate_asset: { input: { instanceId: 'string', newInstanceId: 'string', position: 'vec3?' }, output: { instance: 'SceneObject' } },
-    set_color: { input: { instanceId: 'string', color: 'hex' }, output: { instance: 'SceneObject' } },
-    clear_scene: { input: {}, output: { removedCount: 'number' } },
-    undo: { input: {}, output: { restored: 'boolean' } },
-    save_scene: { input: { title: 'string?' }, output: { scene: 'SceneGraph' } },
-    load_scene: { input: {}, output: { scene: 'SceneGraph' } },
-    play_avatar_action: { input: { action: 'enum' }, output: { action: 'string' } },
-    speak: { input: { text: 'string', emotion: 'enum?' }, output: { text: 'string' } }
+    list_assets: { input:input({category:{type:'string'},tag:{type:'string'}}), output:output({assets:{type:'array',items:{type:'object'}}}) },
+    inspect_scene: { input:input(), output:output({scene:SCENE_SCHEMA}) },
+    place_asset: { input:input({assetId:{type:'string'},instanceId:ID_SCHEMA,position:VEC3_SCHEMA,rotation:VEC3_SCHEMA,scale:VEC3_SCHEMA},['assetId','instanceId','position']), output:output({instance:INSTANCE_SCHEMA}) },
+    move_asset: { input:input({instanceId:ID_SCHEMA,position:VEC3_SCHEMA},['instanceId','position']), output:output({instance:INSTANCE_SCHEMA}) },
+    rotate_asset: { input:input({instanceId:ID_SCHEMA,rotation:VEC3_SCHEMA},['instanceId','rotation']), output:output({instance:INSTANCE_SCHEMA}) },
+    scale_asset: { input:input({instanceId:ID_SCHEMA,scale:VEC3_SCHEMA},['instanceId','scale']), output:output({instance:INSTANCE_SCHEMA}) },
+    remove_asset: { input:input({instanceId:ID_SCHEMA},['instanceId']), output:output({removed:{type:'string'}}) },
+    duplicate_asset: { input:input({instanceId:ID_SCHEMA,newInstanceId:ID_SCHEMA,position:VEC3_SCHEMA},['instanceId','newInstanceId']), output:output({instance:INSTANCE_SCHEMA}) },
+    set_color: { input:input({instanceId:ID_SCHEMA,color:{type:'string',pattern:'^#[0-9A-Fa-f]{6}$'}},['instanceId','color']), output:output({instance:INSTANCE_SCHEMA}) },
+    clear_scene: { input:input(), output:output({removedCount:{type:'integer',minimum:0}}) },
+    undo: { input:input(), output:output({restored:{type:'boolean'}}) },
+    save_scene: { input:input({title:{type:'string',maxLength:80}}), output:output({scene:SCENE_SCHEMA}) },
+    load_scene: { input:input(), output:output({scene:SCENE_SCHEMA}) },
+    play_avatar_action: { input:input({action:{type:'string',enum:ACTIONS}},['action']), output:output({action:{type:'string',enum:ACTIONS}}) },
+    speak: { input:input({text:{type:'string',minLength:1,maxLength:500},emotion:{type:'string',enum:['neutral','happy','sad','angry','surprised']}},['text']), output:output({text:{type:'string'}}) }
   });
   const ok = (data) => ({ ok: true, code: 'OK', data });
   const fail = (code, message, details) => ({ ok: false, code, message, ...(details ? { details } : {}) });

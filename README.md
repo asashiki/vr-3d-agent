@@ -49,7 +49,9 @@ npm start
 复制 `.env.example` 为 `.env`。默认 `LLM_PROVIDER=replay`。实时模式支持：
 
 - `LLM_PROVIDER=openai`：`OPENAI_API_KEY`、可选 `OPENAI_BASE_URL`；
-- `LLM_PROVIDER=openclaw`：`OPENCLAW_URL`、可选 `OPENCLAW_TOKEN`。
+- `LLM_PROVIDER=openclaw`：`OPENCLAW_URL`、可选 `OPENCLAW_TOKEN`；
+- `STT_PROVIDER=openai`：服务端 Whisper-compatible 转写；否则使用浏览器语音识别；
+- `TTS_PROVIDER=openai|elevenlabs`：服务端语音与口型时间轴；否则使用浏览器语音合成和有界嘴型 fallback。
 
 任何超时、非法 JSON 或网络错误都会自动降级到 Replay，不会破坏当前 Scene。详见 [Provider 设置](docs/PROVIDER_SETUP.md)。
 
@@ -61,7 +63,7 @@ npm run test:all
 
 自动测试覆盖非法 Tool、缺失 Asset、重复 Instance、越界位置、极端缩放、严重重叠、Save/Load、Undo、非法模型 JSON、Repair 上限、静态服务和离线 Replay。
 
-Quest 真机截图、录屏、帧率和 Passthrough 交互仍需要连接真实设备后人工验证；桌面通过不被表述为 Quest 通过。清单见 [Quest 验证](docs/QUEST_VALIDATION.md)，当前证据见 [测试报告](docs/TEST_REPORT.md)。
+Quest 真机截图、录屏、帧率和 Passthrough 交互仍需要连接真实设备后人工验证；桌面通过不被表述为 Quest 通过。清单见 [Quest 验证](docs/QUEST_VALIDATION.md)，当前证据见 [测试报告](docs/TEST_REPORT.md)。桌面端按住语音键说话；按住 Shift 拖动托盘、Shift + 滚轮缩放托盘。
 
 ## 文档
 
@@ -69,6 +71,7 @@ Quest 真机截图、录屏、帧率和 Passthrough 交互仍需要连接真实�
 - [Scene Tool Reference](docs/SCENE_TOOL_REFERENCE.md)
 - [Demo Script](docs/DEMO_SCRIPT.md)
 - [Known Limitations](docs/KNOWN_LIMITATIONS.md)
+- [Prompt / Plan 验收对照](docs/REQUIREMENTS_AUDIT.md)
 - [模型许可](MODEL_LICENSE.md)
 - [第三方声明](THIRD_PARTY_NOTICES.md)
 - [素材清单](ASSET_MANIFEST.json)

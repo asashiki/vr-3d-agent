@@ -33,3 +33,15 @@ OPENCLAW_MODEL=openclaw/main
 ```
 
 Provider timeout, invalid JSON and HTTP failures automatically return a deterministic replay plan with `source: replay-fallback`.
+
+## STT
+
+`STT_PROVIDER=browser` keeps recognition entirely in the browser. `STT_PROVIDER=openai` records while the user holds the mic/Quest trigger, uploads only that audio to the project server, and lets the server call the configured Whisper-compatible endpoint. The API key remains server-side.
+
+## TTS and lip sync
+
+- `TTS_PROVIDER=browser`: browser speech synthesis plus bounded synthetic viseme fallback;
+- `TTS_PROVIDER=openai`: server-side speech generation; audio-time viseme fallback when timestamps are unavailable;
+- `TTS_PROVIDER=elevenlabs`: server-side speech with alignment timestamps passed to `vrm-actor`.
+
+If a TTS request fails, the UI falls back to browser speech without blocking scene execution.

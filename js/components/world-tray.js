@@ -4,17 +4,22 @@
   AFRAME.registerComponent('world-tray', {
     schema: { minScale: { default: .55 }, maxScale: { default: 1.6 } },
     init() {
-      this.scaleValue = 1;
+      this.scaleValue = 1; this.handGrab=null; this.mouseGrab=false;
+      this.tmp=new THREE.Vector3();this.offset=new THREE.Vector3();this.ray=new THREE.Raycaster();this.ndc=new THREE.Vector2();this.plane=new THREE.Plane(new THREE.Vector3(0,1,0),-.72);
       this.el.addEventListener('wheel', (event) => {
         event.preventDefault();
         this.setScale(this.scaleValue + (event.detail?.deltaY || event.deltaY) * -.001);
       });
+      window.addEventListener('wheel',(event)=>{if(event.shiftKey){event.preventDefault();this.setScale(this.scaleValue+event.deltaY*-.001);}},{passive:false});
+      window.addEventListener('mousedown',(event)=>this.mouseDown(event));window.addEventListener('mousemove',(event)=>this.mouseMove(event));window.addEventListener('mouseup',()=>this.mouseUp());
       ['#lhand','#rhand'].forEach((selector) => {
         const hand = document.querySelector(selector);
         if (!hand) return;
         hand.addEventListener('thumbstickmoved', (event) => {
           if (Math.abs(event.detail.y) > .55) this.setScale(this.scaleValue + event.detail.y * -.025);
         });
+        hand.addEventListener('gripdown',()=>setTimeout(()=>this.grabHand(hand),0));hand.addEventListener('gripup',()=>this.releaseHand(hand));
+        hand.addEventListener('pinchstarted',()=>setTimeout(()=>this.grabHand(hand),0));hand.addEventListener('pinchended',()=>this.releaseHand(hand));
       });
       window.addEventListener('pocket-tray-reset', () => {
         this.el.setAttribute('position', '0 .72 -1.8'); this.setScale(1); this.emitTransform();
@@ -24,6 +29,18 @@
       this.scaleValue = Math.max(this.data.minScale, Math.min(this.data.maxScale, value));
       this.el.object3D.scale.setScalar(this.scaleValue); this.emitTransform();
     },
+    setNdc(event){const rect=this.el.sceneEl.canvas.getBoundingClientRect();this.ndc.set(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1);},
+    mouseDown(event){if(!event.shiftKey||event.target!==this.el.sceneEl.canvas||!this.el.sceneEl.camera)return;this.setNdc(event);this.ray.setFromCamera(this.ndc,this.el.sceneEl.camera);this.plane.constant=-this.el.object3D.position.y;if(this.ray.ray.intersectPlane(this.plane,this.tmp)){this.offset.copy(this.el.object3D.position).sub(this.tmp);this.mouseGrab=true;}},
+    mouseMove(event){if(!this.mouseGrab||!this.el.sceneEl.camera)return;this.setNdc(event);this.ray.setFromCamera(this.ndc,this.el.sceneEl.camera);if(this.ray.ray.intersectPlane(this.plane,this.tmp))this.el.object3D.position.copy(this.tmp.add(this.offset));},
+    mouseUp(){if(this.mouseGrab){this.mouseGrab=false;this.emitTransform();}},
+    grabHand(hand){
+      if(hand.dataset.pocketObjectGrab==='1')return;
+      hand.object3D.getWorldPosition(this.tmp);const trayWorld=new THREE.Vector3();this.el.object3D.getWorldPosition(trayWorld);
+      if(trayWorld.distanceTo(this.tmp)>.9)return;
+      this.offset.copy(trayWorld).sub(this.tmp);this.handGrab=hand;
+    },
+    releaseHand(hand){if(this.handGrab===hand){this.handGrab=null;this.emitTransform();}},
+    tick(){if(!this.handGrab)return;this.handGrab.object3D.getWorldPosition(this.tmp);this.tmp.add(this.offset);this.tmp.y=Math.max(.35,Math.min(1.35,this.tmp.y));this.el.object3D.position.copy(this.tmp);},
     emitTransform() {
       const p = this.el.object3D.position;
       window.dispatchEvent(new CustomEvent('pocket-tray-transform', { detail: { position:[p.x,p.y,p.z], scale:this.scaleValue } }));
@@ -51,7 +68,7 @@
       this.ndc.set(((event.clientX-rect.left)/rect.width)*2-1,-((event.clientY-rect.top)/rect.height)*2+1);
     },
     mouseDown(event) {
-      if (event.target !== this.el.sceneEl.canvas || !this.el.sceneEl.camera) return;
+      if (event.shiftKey || event.target !== this.el.sceneEl.canvas || !this.el.sceneEl.camera) return;
       this.setNdc(event); this.ray.setFromCamera(this.ndc,this.el.sceneEl.camera);
       const hit=this.ray.intersectObjects(this.targets().map((el)=>el.object3D),true)[0];
       const entity=hit && this.entityFor(hit.object); if(!entity) return;
@@ -71,9 +88,9 @@
     handDown(hand) {
       hand.object3D.getWorldPosition(this.tmp); let best=null,bestDistance=.22;
       for(const entity of this.targets()){const p=new THREE.Vector3();entity.object3D.getWorldPosition(p);const d=p.distanceTo(this.tmp);if(d<bestDistance){best=entity;bestDistance=d;}}
-      if(best){this.handGrab={hand,entity:best};window.dispatchEvent(new CustomEvent('pocket-select',{detail:{instanceId:best.dataset.instanceId}}));}
+      if(best){hand.dataset.pocketObjectGrab='1';this.handGrab={hand,entity:best};window.dispatchEvent(new CustomEvent('pocket-select',{detail:{instanceId:best.dataset.instanceId}}));}
     },
-    handUp(hand) { if(this.handGrab?.hand===hand){this.emitDrop(this.handGrab.entity);this.handGrab=null;} },
+    handUp(hand) { if(this.handGrab?.hand===hand){this.emitDrop(this.handGrab.entity);this.handGrab=null;}delete hand.dataset.pocketObjectGrab; },
     emitDrop(entity) {
       const p=entity.object3D.position, r=entity.object3D.rotation, s=entity.object3D.scale;
       window.dispatchEvent(new CustomEvent('pocket-manual-transform',{detail:{instanceId:entity.dataset.instanceId,position:[p.x,p.y,p.z],rotation:[THREE.MathUtils.radToDeg(r.x),THREE.MathUtils.radToDeg(r.y),THREE.MathUtils.radToDeg(r.z)],scale:[s.x,s.y,s.z]}}));

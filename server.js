@@ -4,7 +4,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const { deterministicPlan } = require('./lib/scene-planner');
-const { createLLMProvider } = require('./lib/providers');
+const { createLLMProvider, createSTTProvider, createTTSProvider } = require('./lib/providers');
 
 const ROOT = __dirname;
 const MIME = { '.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.md':'text/markdown; charset=utf-8','.vrm':'model/gltf-binary','.vrma':'application/octet-stream','.glb':'model/gltf-binary','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml' };
@@ -32,6 +32,14 @@ function readJson(req, limit = 1_000_000) {
     req.on('error', reject);
   });
 }
+function readBuffer(req, limit = 25_000_000) {
+  return new Promise((resolve, reject) => {
+    const chunks=[]; let size=0;
+    req.on('data',(chunk)=>{size+=chunk.length;if(size>limit){reject(new Error('BODY_TOO_LARGE'));req.destroy();return;}chunks.push(chunk);});
+    req.on('end',()=>resolve(Buffer.concat(chunks)));
+    req.on('error',reject);
+  });
+}
 function safeFile(urlPath) {
   const decoded = decodeURIComponent(urlPath === '/' ? '/index.html' : urlPath);
   const file = path.resolve(ROOT, `.${decoded}`);
@@ -41,10 +49,15 @@ function createServer(options = {}) {
   const env = { ...loadEnv(), ...(options.env || {}) };
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'ASSET_MANIFEST.json'), 'utf8'));
   const livePlanner = options.planner === undefined ? createLLMProvider(env, manifest.assets) : options.planner;
+  const sttProvider = options.sttProvider === undefined ? createSTTProvider(env) : options.sttProvider;
+  const ttsProvider = options.ttsProvider === undefined ? createTTSProvider(env) : options.ttsProvider;
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     try {
-      if (url.pathname === '/api/health') return sendJson(res, 200, { ok:true, mode:livePlanner ? 'live-with-replay-fallback' : 'replay', provider:env.LLM_PROVIDER || (env.OPENAI_API_KEY ? 'openai' : 'replay') });
+      if (url.pathname === '/api/health') return sendJson(res, 200, {
+        ok:true, mode:livePlanner ? 'live-with-replay-fallback' : 'replay', provider:env.LLM_PROVIDER || (env.OPENAI_API_KEY ? 'openai' : 'replay'),
+        services:{ llm:!!livePlanner, stt:!!sttProvider, tts:!!ttsProvider }
+      });
       if (url.pathname === '/api/catalog') return sendJson(res, 200, manifest);
       if (url.pathname === '/api/plan' && req.method === 'POST') {
         const body = await readJson(req);
@@ -55,6 +68,18 @@ function createServer(options = {}) {
           catch (error) { return sendJson(res, 200, { plan:deterministicPlan(input), source:'replay-fallback', warning:error.message }); }
         }
         return sendJson(res, 200, { plan:deterministicPlan(input), source:'replay' });
+      }
+      if (url.pathname === '/api/stt' && req.method === 'POST') {
+        if (!sttProvider) return sendJson(res, 503, { error:'STT_NOT_CONFIGURED', fallback:'browser' });
+        const audio=await readBuffer(req);
+        if(!audio.length)return sendJson(res,400,{error:'AUDIO_REQUIRED'});
+        return sendJson(res,200,await sttProvider({audio,mimeType:req.headers['content-type']||'audio/webm',fileName:url.searchParams.get('file')||'speech.webm'}));
+      }
+      if (url.pathname === '/api/tts' && req.method === 'POST') {
+        if (!ttsProvider) return sendJson(res, 503, { error:'TTS_NOT_CONFIGURED', fallback:'browser' });
+        const body=await readJson(req);
+        if(!body.text||typeof body.text!=='string')return sendJson(res,400,{error:'TEXT_REQUIRED'});
+        return sendJson(res,200,await ttsProvider({text:body.text.slice(0,500),voice:body.voice}));
       }
       if (url.pathname.startsWith('/api/')) return sendJson(res, 404, { error:'API_NOT_FOUND' });
       if (req.method !== 'GET' && req.method !== 'HEAD') return sendJson(res, 405, { error:'METHOD_NOT_ALLOWED' });

@@ -16,7 +16,7 @@ flowchart TD
 ## Boundaries
 
 - 浏览器：渲染、输入、Scene Graph、Tool Validation、Undo 和 LocalStorage Save/Load。
-- 服务端：读取密钥、调用 LLM Provider、返回严格的 `say + emotion + avatarAction + commands`。
+- 服务端：读取密钥、调用中性的 LLM/STT/TTS Provider；LLM 返回严格的 `say + emotion + avatarAction + commands`，语音密钥和音频供应商细节不进入前端。
 - Catalog：Agent 只能使用 `ASSET_MANIFEST.json` 中存在的 `assetId`。
 - Replay：没有密钥或 Provider 出错时使用确定性计划，比赛现场仍可完整演示。
 

@@ -97,6 +97,7 @@
       this._acaoLoop = false;
       this.audio = null;
       this.timeline = [];
+      this.syntheticSpeaking = false;
       this._blinkT = 1.5 + Math.random() * 2;
       this._blink = 0;
       this._tReset = 0;
@@ -189,6 +190,11 @@
       }
     },
 
+    setSpeaking: function (active) {
+      this.syntheticSpeaking = !!active;
+      if (!active) for (const v of VISEMAS) this._alvoVis[v] = 0;
+    },
+
     setEmocao: function (nome) {
       for (const n of EMOCOES) this._alvoEmo[n] = (n === nome ? 0.9 : 0);
       if (nome) this._tReset = 0;
@@ -221,10 +227,21 @@
 
       // lip-sync (visemes)
       for (const v of VISEMAS) this._alvoVis[v] = 0;
-      if (this.audio && !this.audio.paused && !this.audio.ended && this.timeline.length) {
+      if (this.audio && !this.audio.paused && !this.audio.ended) {
         const now = this.audio.currentTime;
-        const seg = this.timeline.find((x) => now >= x.t0 && now < x.t1);
-        if (seg && seg.v) this._alvoVis[seg.v] = seg.w;
+        if (this.timeline.length) {
+          const seg = this.timeline.find((x) => now >= x.t0 && now < x.t1);
+          if (seg && seg.v) this._alvoVis[seg.v] = seg.w;
+        } else {
+          // Provider has no timestamps: a bounded audio-time fallback keeps the mouth alive.
+          const pulse = Math.max(0, Math.sin(now * 19));
+          this._alvoVis.aa = .18 + pulse * .38;
+          this._alvoVis.oh = Math.max(0, Math.sin(now * 13 + 1.2)) * .18;
+        }
+      } else if (this.syntheticSpeaking) {
+        const now = time / 1000;
+        this._alvoVis.aa = .16 + Math.max(0, Math.sin(now * 18)) * .34;
+        this._alvoVis.oh = Math.max(0, Math.sin(now * 11 + .8)) * .16;
       }
       for (const v of VISEMAS) {
         const cur = em.getValue(v) || 0;

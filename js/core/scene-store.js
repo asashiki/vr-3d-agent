@@ -59,6 +59,12 @@
       this.emit(meta);
       return this.snapshot();
     }
+    restore(scene, meta = {}) {
+      if (!this.validateScene(scene)) throw new Error('invalid scene graph');
+      this.scene = clone(scene);
+      this.emit(meta);
+      return this.snapshot();
+    }
     undo() {
       if (!this.history.length) return false;
       this.scene = this.history.pop();

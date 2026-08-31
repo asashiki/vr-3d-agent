@@ -38,6 +38,7 @@
           continue;
         }
         this.phase('Validate', { commands: plan.commands.length });
+        const checkpoint = this.tools.store.snapshot();
         const results = [];
         for (const command of plan.commands) results.push(this.tools.execute(command));
         errors = results.filter((result) => !result.ok);
@@ -49,6 +50,7 @@
           this.phase('Speak', { text: plan.say });
           return { ok: true, plan, results, attempts: attempt + 1 };
         }
+        this.tools.store.restore(checkpoint, { tool: 'agent_rollback' });
         if (attempt++ >= this.maxRepairs) return { ok: false, code: 'REPAIR_LIMIT', errors, results, attempts: attempt };
       }
       return { ok: false, code: 'REPAIR_LIMIT', errors };

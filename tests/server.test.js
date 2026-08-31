@@ -24,3 +24,8 @@ test('invalid requests and traversal are rejected',()=>withServer(async(base)=>{
   assert.equal((await fetch(`${base}/api/nope`)).status,404);
   assert.equal(safeFile('/../../etc/passwd'),null);
 }));
+test('STT and TTS routes use injected provider adapters',()=>withServer(async(base)=>{
+  const stt=await fetch(`${base}/api/stt`,{method:'POST',headers:{'content-type':'audio/webm'},body:Uint8Array.from([1,2])}).then((r)=>r.json());
+  const tts=await fetch(`${base}/api/tts`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:'你好'})}).then((r)=>r.json());
+  assert.equal(stt.text,'转写');assert.equal(tts.audioBase64,'AQI=');
+},{planner:null,sttProvider:async({audio})=>({text:audio.length===2?'转写':'错误',provider:'test'}),ttsProvider:async()=>({audioBase64:'AQI=',mimeType:'audio/mpeg',alignment:null,provider:'test'})}));

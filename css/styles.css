@@ -7,3 +7,4 @@
 @media(max-width:900px){.demo-card{display:none}.panel{width:230px}.composer{left:250px;right:250px}.mira-card{left:250px}.asset-grid{grid-template-columns:1fr}.hero-copy{top:46%}}
 @media(max-width:680px){.topbar{padding:0 10px}.scene-meta{display:none}.panel{top:76px;bottom:132px;width:190px;padding:12px}.inspector-panel{display:none}.catalog-panel{left:8px}.composer{left:8px;right:8px;bottom:8px}.mira-card{left:206px;right:8px;bottom:80px}.suggestion{display:none}.hero-copy{left:24px;width:calc(100vw - 48px)}.hero-copy h1{font-size:44px}.hero-lead{font-size:15px}.brand-row{align-items:flex-start}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+#mic-btn{width:46px!important;font-size:10px!important;font-weight:800}

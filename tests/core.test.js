@@ -7,7 +7,7 @@ const { SceneStore, MemoryStorage } = require('../js/core/scene-store');
 const { SceneToolRegistry, TOOL_NAMES } = require('../js/core/tool-registry');
 const { AgentLoop } = require('../js/core/agent-loop');
 const { deterministicPlan, normalizePlan } = require('../lib/scene-planner');
-const { extractJson } = require('../lib/providers');
+const { extractJson, createSTTProvider, createTTSProvider } = require('../lib/providers');
 
 function setup() {
   const catalog = new AssetCatalog(manifest);
@@ -22,6 +22,7 @@ test('catalog contains 30 uniquely licensed assets', () => {
 });
 test('registry exposes exactly the 15 approved tools', () => {
   const { tools }=setup(); assert.deepEqual(tools.names(),TOOL_NAMES); assert.equal(tools.names().length,15);
+  for(const name of tools.names()){assert.equal(tools.schemas()[name].input.type,'object');assert.equal(tools.schemas()[name].output.type,'object');}
 });
 test('invalid tool and missing asset return stable errors without mutation', () => {
   const { tools,store }=setup();
@@ -59,7 +60,22 @@ test('agent command and repair budgets terminate', async () => {
   const result=await new AgentLoop({planner:badPlanner,tools,maxRepairs:2}).run('x');
   assert.equal(result.ok,false); assert.equal(result.code,'COMMAND_BUDGET_EXCEEDED'); assert.equal(calls,3);
 });
+test('failed agent batch rolls back before a successful repair', async () => {
+  const { tools,store }=setup();let calls=0;
+  const planner=async()=>++calls===1
+    ? {say:'retry',emotion:'neutral',avatarAction:'Thinking',commands:[{tool:'place_asset',assetId:'tree_round_01',instanceId:'temporary',position:[0,.04,0]},{tool:'place_asset',assetId:'missing',instanceId:'bad',position:[.5,.04,0]}]}
+    : {say:'fixed',emotion:'happy',avatarAction:'Clapping',commands:[{tool:'place_asset',assetId:'bench_wood_01',instanceId:'final',position:[0,.04,0]}]};
+  const result=await new AgentLoop({planner,tools,maxRepairs:2}).run('repair');
+  assert.equal(result.ok,true);assert.equal(calls,2);assert.equal(store.scene.objects.some((item)=>item.instanceId==='temporary'),false);assert.equal(store.scene.objects[0].instanceId,'final');
+});
 test('model JSON fences parse and output is normalized', () => {
   const value=extractJson('```json\n{"say":"ok","commands":[]}\n```'); assert.equal(value.say,'ok');
   assert.equal(normalizePlan({...value,emotion:'invalid',avatarAction:'invalid'}).emotion,'neutral');
+});
+test('neutral STT and TTS adapters use server-only provider credentials', async () => {
+  const calls=[];const fakeFetch=async(url,options)=>{calls.push({url,options});return url.endsWith('/audio/transcriptions')?new Response(JSON.stringify({text:'你好'}),{status:200,headers:{'content-type':'application/json'}}):new Response(Uint8Array.from([1,2,3]),{status:200});};
+  const env={OPENAI_API_KEY:'server-secret',OPENAI_BASE_URL:'https://provider.test/v1',STT_PROVIDER:'openai',TTS_PROVIDER:'openai'};
+  assert.equal((await createSTTProvider(env,fakeFetch)({audio:Buffer.from([1]),mimeType:'audio/webm'})).text,'你好');
+  assert.equal((await createTTSProvider(env,fakeFetch)({text:'你好'})).audioBase64,'AQID');
+  assert.equal(calls.length,2);assert.match(calls[0].options.headers.authorization,/server-secret/);assert.equal(JSON.parse(calls[1].options.body).response_format,'mp3');
 });
