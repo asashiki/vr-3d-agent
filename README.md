@@ -1,5 +1,7 @@
 ## 核心演示
 
+<img width="3839" height="2159" alt="1086eb6b-a8f7-4485-9ff3-42a10c16e734" src="https://github.com/user-attachments/assets/143c6080-87ff-44af-a18d-bba571245a66" />
+
 https://github.com/user-attachments/assets/442ed6a8-e74d-42a1-8163-469294954848
 
 
