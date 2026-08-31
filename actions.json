@@ -1,0 +1,10 @@
+{
+  "actions": [
+    { "tag": "relax", "vrma": "Relax", "face": "relaxed", "desc": "return to a calm pose", "status": "ok" },
+    { "tag": "think", "vrma": "Thinking", "desc": "thinking pose", "status": "ok" },
+    { "tag": "surprised", "vrma": "Surprised", "face": "surprised", "desc": "brief surprise", "status": "ok" },
+    { "tag": "clap", "vrma": "Clapping", "face": "happy", "desc": "celebrate a completed scene", "status": "ok" },
+    { "tag": "lookaround", "vrma": "LookAround", "desc": "look around the world tray", "status": "ok" },
+    { "tag": "bye", "vrma": "Goodbye", "desc": "wave goodbye", "status": "ok" }
+  ]
+}

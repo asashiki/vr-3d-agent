@@ -1,0 +1,11 @@
+# Code owners are requested for review automatically on matching paths.
+# See https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+*                   @andrewsegas
+
+# Areas (add co-maintainers here as the project grows)
+/server.js          @andrewsegas
+/js/                @andrewsegas
+/docs/              @andrewsegas
+/.github/           @andrewsegas

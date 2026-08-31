@@ -1,0 +1,73 @@
+name: 🐞 Bug report
+description: Something isn't working as expected
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please search existing issues first.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: When I…, the avatar…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the office
+        2. Look at agent X
+        3. Hold the mic and say "…"
+        4. See error
+    validations:
+      required: true
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where did it happen?
+      options:
+        - Desktop browser (Chrome)
+        - Desktop browser (Firefox / other)
+        - Meta Quest 3 browser (2D)
+        - Meta Quest 3 immersive AR
+        - Other (describe below)
+    validations:
+      required: true
+  - type: input
+    id: agent-avatar
+    attributes:
+      label: Agent / avatar involved
+      description: Which agent (brain) and which .vrm avatar, if relevant.
+      placeholder: brain "neo", avatar "VIPE_Hero__1084.vrm"
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Console / diagnostics
+      description: >
+        Open the in-app 🐞 diagnostics panel (HUD) and paste relevant lines, and/or
+        include `incarna.log` from the server and any browser console errors.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Release tag or `git rev-parse --short HEAD`.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched existing issues and this isn't a duplicate.
+          required: true
+        - label: I'm on the latest `main` (or noted my version above).
+          required: true

@@ -1,0 +1,19 @@
+{
+  "name": "pocket-world-agent",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quest WebXR spatial co-builder agent based on Incarna",
+  "scripts": {
+    "prestart": "node scripts/prepare-runtime.mjs",
+    "start": "node server.js",
+    "dev": "PORT=8080 node server.js",
+    "generate:assets": "node scripts/generate-scene-assets.mjs",
+    "test": "node --test tests/*.test.js",
+    "check": "node scripts/project-check.mjs",
+    "test:all": "npm test && npm run check"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

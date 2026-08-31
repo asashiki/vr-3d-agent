@@ -1,0 +1,17 @@
+{
+  "$schema": "./agents.schema.json",
+  "office": {
+    "//": "The 'office' is where your agents live. In passthrough they appear in your real room; seats are positions relative to the office origin (which spawns in front of you when you enter AR). Edit seats to rearrange the room.",
+    "environment": "passthrough",
+    "seats": {
+      "center":     { "position": [0.0, 0, 0.0],  "rotation": 0 },
+      "left":       { "position": [-0.8, 0, 0.2], "rotation": 25 },
+      "right":      { "position": [0.8, 0, 0.2],  "rotation": -25 },
+      "back-left":  { "position": [-0.9, 0, -0.8],"rotation": 20 },
+      "back-right": { "position": [0.9, 0, -0.8], "rotation": -20 }
+    },
+    "spawn": { "forward": 1.6, "lift": 0 }
+  },
+  "//agents": "Start empty: on first run the app shows a guided empty state. Add agents visually in the Studio (Roster tab) — it saves to agents.local.json — or copy this file to agents.local.json and add them by hand, e.g.: { \"id\": \"assistant\", \"name\": \"Assistant\", \"emoji\": \"🤖\", \"brain\": \"main\", \"voice\": \"<elevenlabs_voice_id>\", \"avatar\": \"assets/avatars/your-avatar.vrm\", \"seat\": \"center\", \"tone\": \"helpful, warm, concise\" }",
+  "agents": []
+}
