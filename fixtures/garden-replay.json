@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "healing-garden-demo",
+  "turns": [
+    {"user":"在我面前搭一个治愈系小花园，有一棵树、一张长椅、两盏灯和一些花。","expect":{"minimumObjects":5,"requiredInstances":["tree-main","bench-main","lamp-left","lamp-right"]}},
+    {"user":"把左边的灯移到树旁边，树缩小一点，删掉右边的石头。","expect":{"removed":["rock-right"],"unchanged":["bench-main","lamp-right"]}},
+    {"user":"保持长椅现在的位置，保存这个场景。","expect":{"saved":true}}
+  ]
+}

@@ -1,45 +1,78 @@
-# VR/3D Agent
+# Pocket World Agent / 小世界共创 Agent
 
-根据你的想法生成、摆布 3D 场景，在 VR 或 3D 环境里跟 Agent 一起搭世界。
+一个比赛可演示的 Quest WebXR 空间共创 Agent。Mira 出现在现实空间中，把自然语言转换成经过校验的场景工具调用，在可移动的 World Tray 上创建、修改、检查和保存 3D 小世界。
 
-这个仓库用于收集活动参与者的想法、参考链接、MVP 方案和实验记录。项目还在初步规划阶段，不要求一定做 VR；只要你对游戏开发、3D 场景、Agent、VibeGame、Unity、WebXR、虚拟角色或 AI 世界构建感兴趣，都可以把材料放进来。
+它不是把聊天机器人换成 3D 皮肤：Agent 会读取 Scene Graph、选择白名单素材、执行工具、检查结果并在有限预算内修复错误。用户还能用鼠标、Quest 手柄或手部捏合直接移动物件，手动变换会写回 Scene Graph。
 
-## 当前 MVP 想法
+## 一条命令启动
 
-先找或做一个简单的 3D 建模/场景，然后给它配上 AI 能力，让 Agent 能参与到场景理解、摆放、交互或角色行为里。
+需要 Node.js 18+：
 
-可能的最小切入点：
+```bash
+npm start
+```
 
-- 输入一句话，生成或修改一个简单 3D 场景
-- 在 Unity / Web 3D / VibeGame 中接入一个可对话 Agent
-- 让 Agent 控制一个 3D 角色，完成简单任务
-- 把已有 3D 模型接上文本、语音或动作交互
-- 做一个桌面端 3D 原型，VR 作为后续扩展
+首次启动会下载许可明确的 VRoid Sample A/B 和 Incarna 使用的 A-Frame 运行时；之后打开 <http://localhost:8080>。不配置任何 API Key 也能运行完整 Replay Demo。
 
-## 可以提交什么
+Windows PowerShell：
 
-欢迎用 Issue、PR 或直接提交文档的方式补充：
+```powershell
+Copy-Item .env.example .env
+npm start
+```
 
-- 项目想法
-- 技术路线
-- 参考项目
-- 论文、文章、视频、Demo 链接
-- Unity / Godot / Three.js / WebXR / VibeGame 相关资料
-- 3D 模型、Agent 交互、游戏玩法方向
-- MVP 拆解和任务认领
+## 90 秒核心演示
 
-## 文档入口
+1. 点击“进入 MR”或“桌面预览”。
+2. 点击“搭建默认花园”，或输入：`在我面前搭一个治愈系小花园，有一棵树、一张长椅、两盏灯和一些花。`
+3. 输入：`把左边的灯移到树旁边，树缩小一点，删掉右边的石头。`
+4. 用鼠标、Quest grip 或 hand pinch 移动长椅。
+5. 输入：`保持长椅现在的位置，保存这个场景。`
+6. 刷新页面，点击“恢复”。
 
-- [ideas.md](ideas.md)：想法池
-- [references.md](references.md)：参考资料池
+## 已实现
 
-## 参与方式
+- Incarna 的 A-Frame、three-vrm、VRMA 动作与 WebXR 基线；
+- 单角色 Mira，AvatarSample_B 默认、AvatarSample_A 安装级 fallback；
+- 30 个程序化生成的 CC0 低多边形 GLB 和统一 Asset Catalog；
+- 可移动/缩放 World Tray、桌面/控制器/hand pinch 物件抓取；
+- 版本化 Scene Graph、Inspector、Undo、Save/Load；
+- 15 个白名单 Scene Tools，Schema、边界、重叠、ID、容量和稳定错误码校验；
+- `Understand → Plan → Validate → Execute → Inspect → Repair → Speak` Agent Loop；
+- 单轮最多 14 条命令，Repair 最多 2 次；
+- OpenAI-compatible、OpenClaw 和 Replay Provider；所有密钥仅在服务端；
+- 文字输入为硬功能，浏览器语音识别为增强；
+- Tool Timeline 和不依赖外部 API 的花园 Replay fixture。
 
-1. 先把粗糙想法写下来，不用等它完整。
-2. 看到有用的链接，就放到 `references.md`。
-3. 想推进某个方向时，可以开 Issue 描述目标、技术栈和最小 Demo。
-4. 后续再把相近想法整理成几个可执行 MVP。
+## Provider 配置
 
-## Tags
+复制 `.env.example` 为 `.env`。默认 `LLM_PROVIDER=replay`。实时模式支持：
 
-`#vr` `#3d` `#agent` `#game-dev` `#unity` `#webxr` `#vibegame`
+- `LLM_PROVIDER=openai`：`OPENAI_API_KEY`、可选 `OPENAI_BASE_URL`；
+- `LLM_PROVIDER=openclaw`：`OPENCLAW_URL`、可选 `OPENCLAW_TOKEN`。
+
+任何超时、非法 JSON 或网络错误都会自动降级到 Replay，不会破坏当前 Scene。详见 [Provider 设置](docs/PROVIDER_SETUP.md)。
+
+## 测试
+
+```bash
+npm run test:all
+```
+
+自动测试覆盖非法 Tool、缺失 Asset、重复 Instance、越界位置、极端缩放、严重重叠、Save/Load、Undo、非法模型 JSON、Repair 上限、静态服务和离线 Replay。
+
+Quest 真机截图、录屏、帧率和 Passthrough 交互仍需要连接真实设备后人工验证；桌面通过不被表述为 Quest 通过。清单见 [Quest 验证](docs/QUEST_VALIDATION.md)，当前证据见 [测试报告](docs/TEST_REPORT.md)。
+
+## 文档
+
+- [架构](ARCHITECTURE.md)
+- [Scene Tool Reference](docs/SCENE_TOOL_REFERENCE.md)
+- [Demo Script](docs/DEMO_SCRIPT.md)
+- [Known Limitations](docs/KNOWN_LIMITATIONS.md)
+- [模型许可](MODEL_LICENSE.md)
+- [第三方声明](THIRD_PARTY_NOTICES.md)
+- [素材清单](ASSET_MANIFEST.json)
+
+## License
+
+代码基于 [andrewsegas/incarna](https://github.com/andrewsegas/incarna)，遵循 MIT License 并保留原作者 Attribution。VRM 模型和场景资产的许可边界见独立文件；不要将模型文件误认为项目 MIT 代码的一部分。

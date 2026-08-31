@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & ideas (Discussions)
+    url: https://github.com/andrewsegas/incarna/discussions
+    about: Ask questions, share setups, and propose ideas before opening an issue.
+  - name: 🔒 Report a security vulnerability
+    url: https://github.com/andrewsegas/incarna/security/advisories/new
+    about: Please report vulnerabilities privately — do NOT open a public issue. See SECURITY.md.
+  - name: 📖 Documentation
+    url: https://github.com/andrewsegas/incarna#readme
+    about: Read the README and the docs/ folder first.

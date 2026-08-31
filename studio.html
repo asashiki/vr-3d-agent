@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Incarna — Studio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="vendor/aframe.min.js"></script>
+    <script src="vendor/three-vrm.min.js"></script>
+    <script src="vendor/three-vrm-animation.min.js"></script>
+    <script src="js/components/vrm-model.js"></script>
+    <script src="js/components/vrm-anim-utils.js"></script>
+    <script src="js/components/vrm-actor.js"></script>
+    <script src="js/components/look-at-camera.js"></script>
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      body { display: grid; grid-template-columns: 1fr 440px; height: 100vh; overflow: hidden; }
+      #stage { position: relative; background: radial-gradient(800px 500px at 50% 20%, #1a2432, #0b0d12 70%); }
+      a-scene { width: 100%; height: 100%; }
+      .legend { position: absolute; left: 12px; bottom: 12px; color: var(--muted); font-size: 12px; }
+      #panel { border-left: 1px solid var(--stroke); background: var(--panel); overflow-y: auto; padding: 0 0 60px; }
+      #s-head { position: sticky; top: 0; z-index: 5; background: var(--panel); padding: 14px 16px 0;
+        border-bottom: 1px solid var(--stroke); }
+      #s-top { display: flex; align-items: center; justify-content: space-between; }
+      #s-top h2 { margin: 0; font-size: 18px; }
+      #s-top a { color: var(--muted); font-size: 12px; text-decoration: none; border: 1px solid var(--stroke);
+        border-radius: 8px; padding: 6px 10px; }
+      #tabs { display: flex; gap: 4px; margin-top: 12px; }
+      #tabs button { appearance: none; cursor: pointer; background: none; border: none; color: var(--muted);
+        padding: 10px 12px; font-size: 13px; font-weight: 600; border-bottom: 2px solid transparent; }
+      #tabs button.on { color: var(--cyan); border-bottom-color: var(--cyan); }
+      .tab { display: none; padding: 16px; } .tab.on { display: block; }
+      .sec { border: 1px solid var(--stroke); border-radius: 14px; padding: 12px; margin-bottom: 14px; }
+      .sec > h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--cyan); }
+      .field { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+      .field label { font-size: 11px; color: var(--muted); min-width: 52px; }
+      select, input[type=text] { background: #0e131b; color: var(--text); border: 1px solid var(--stroke);
+        border-radius: 8px; padding: 8px; font-size: 12px; flex: 1; min-width: 60px; }
+      button.b { padding: 8px 12px; border-radius: 10px; border: 0; cursor: pointer; font-weight: 700; font-size: 12px; }
+      button.b.cyan { background: var(--cyan); color: #04222a; }
+      button.b.ghost { background: #0e131b; color: var(--text); border: 1px solid var(--stroke); }
+      button.b.danger { background: #2a1620; color: var(--bad); border: 1px solid var(--bad); }
+      .rcard { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center;
+        padding: 10px; border: 1px solid var(--stroke); border-radius: 12px; margin-bottom: 8px; }
+      .rcard .em { font-size: 24px; text-align: center; }
+      .rcard .nm { font-weight: 700; }
+      .rcard .meta { color: var(--muted); font-size: 11px; margin-top: 2px; }
+      .rcard .acts { display: flex; gap: 6px; }
+      .row { display: grid; grid-template-columns: 76px 1fr auto; gap: 8px; align-items: center;
+        padding: 8px; border: 1px solid var(--stroke); border-radius: 12px; margin-bottom: 8px; }
+      .row.pass { border-color: var(--ok); } .row.fail { border-color: var(--bad); }
+      .row .tag { font-weight: 700; } .row .desc { color: var(--muted); font-size: 11px; }
+      .row .note { width: 100%; background: #0e131b; color: var(--text); border: 1px solid var(--stroke);
+        border-radius: 8px; padding: 5px; margin-top: 4px; font-size: 11px; }
+      .row .play { padding: 8px; border-radius: 10px; border: 0; cursor: pointer; background: var(--cyan); color: #04222a; font-weight: 700; }
+      .vrow { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+        padding: 6px 8px; border-bottom: 1px solid var(--stroke); font-size: 12px; }
+      .vrow .map { color: var(--muted); font-size: 10px; } .vrow .map.used { color: var(--ok); }
+      .barrow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+      .barrow button { padding: 6px 9px; border-radius: 9px; border: 1px solid var(--stroke); background: #0e131b; color: var(--text); cursor: pointer; font-size: 12px; }
+      .savebar { position: sticky; bottom: 0; background: var(--panel); padding: 12px 0 0; margin-top: 8px; border-top: 1px solid var(--stroke); }
+      button.save { width: 100%; padding: 12px; border: 0; border-radius: 12px; cursor: pointer;
+        background: linear-gradient(180deg, #4bf0ff, var(--cyan)); color: #04222a; font-weight: 700; }
+      button.save:disabled { filter: grayscale(1) opacity(0.5); cursor: not-allowed; }
+      #msg { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; min-height: 16px; }
+      .hint { color: var(--muted); font-size: 10px; margin-top: 4px; }
+      .credit { color: var(--muted); font-size: 11px; text-align: center; margin: 14px 16px; }
+      .credit a { color: var(--cyan); text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <a-scene renderer="colorManagement: true; physicallyCorrectLights: true"
+               background="color: #0b0d12" embedded vr-mode-ui="enabled: false">
+        <a-entity light="type: ambient; intensity: 1.1"></a-entity>
+        <a-entity light="type: directional; intensity: 0.8" position="1 3 2"></a-entity>
+        <a-entity id="stage-avatar" vrm-actor look-at-camera="enabled: true; smooth: 0.1"
+                  position="0 0 -1.6" rotation="0 0 0"></a-entity>
+        <a-entity camera position="0 1.4 0" look-controls wasd-controls></a-entity>
+      </a-scene>
+      <div class="legend">drag to orbit • WASD to move • preview stage</div>
+    </div>
+
+    <div id="panel">
+      <div id="s-head">
+        <div id="s-top">
+          <h2>◐ Incarna Studio</h2>
+          <a href="index.html" id="back">← office</a>
+        </div>
+        <div id="tabs">
+          <button data-tab="roster" class="on">Roster</button>
+          <button data-tab="avatars">Avatars</button>
+          <button data-tab="actions">Actions</button>
+        </div>
+      </div>
+
+      <!-- ============ ROSTER ============ -->
+      <div class="tab on" id="tab-roster">
+        <div class="sub" style="color:var(--muted);font-size:12px;margin-bottom:12px">
+          Compose your office: bind an OpenClaw agent to an avatar + voice + seat. Saved to <code>agents.local.json</code>.
+        </div>
+        <div id="roster-list"></div>
+
+        <div class="sec">
+          <h3 id="form-title">Add agent</h3>
+          <div class="field"><label>OpenClaw</label><select id="f-brain"></select></div>
+          <div class="field"><label>id</label><input type="text" id="f-id" placeholder="slug (unique)" /></div>
+          <div class="field"><label>name</label><input type="text" id="f-name" placeholder="Display name" />
+            <input type="text" id="f-emoji" placeholder="🤖" style="max-width:60px;flex:0 0 60px" /></div>
+          <div class="field"><label>avatar</label><select id="f-avatar"></select>
+            <button class="b ghost" id="f-avatar-prev">preview</button></div>
+          <div class="field"><label></label>
+            <input type="file" id="f-avatar-file" accept=".vrm" style="flex:1;font-size:11px;color:var(--muted)" />
+            <button class="b ghost" id="f-avatar-up">upload</button></div>
+          <div class="field"><label>voice</label><select id="f-voice"></select>
+            <button class="b ghost" id="f-voice-prev">▶</button></div>
+          <div class="field"><label>seat</label><select id="f-seat"></select></div>
+          <div class="field"><label>tone</label><input type="text" id="f-tone" placeholder="personality for the voice layer" /></div>
+          <div class="field"><label>desc</label><input type="text" id="f-desc" placeholder="short description" /></div>
+          <div class="field" style="gap:8px">
+            <button class="b cyan" id="f-add" style="flex:1">+ add to office</button>
+            <button class="b ghost" id="f-clear">clear</button>
+          </div>
+          <div class="hint">Voice list comes from your ElevenLabs account; the current voice stays selectable even if custom.</div>
+        </div>
+
+        <div class="savebar">
+          <button class="save" id="save-office">💾 Save office</button>
+        </div>
+      </div>
+
+      <!-- ============ AVATARS ============ -->
+      <div class="tab" id="tab-avatars">
+        <div class="sec">
+          <h3>Avatar preview</h3>
+          <div class="field"><label>model</label><select id="a-sel"></select><button class="b cyan" id="a-load">load</button></div>
+          <div class="field"><label>add</label>
+            <input type="file" id="a-file" accept=".vrm" style="flex:1;font-size:11px;color:var(--muted)" />
+            <button class="b ghost" id="a-up">upload .vrm</button></div>
+          <div class="hint">Uploads/saves need the server started with <code>ALLOW_DEV_WRITES=true</code>.</div>
+        </div>
+        <div class="sec">
+          <h3>Emotions (face only)</h3>
+          <div class="barrow" id="emos"></div>
+          <div class="barrow"><button id="idle">▶ idle</button><button id="neutral">neutral face</button></div>
+        </div>
+        <div class="sec">
+          <h3>All VRMA files</h3>
+          <div id="vrmas"></div>
+          <div class="field" style="margin-top:10px"><label>add</label>
+            <input type="file" id="vrma-file" accept=".vrma" style="flex:1;font-size:11px;color:var(--muted)" />
+            <button class="b ghost" id="vrma-up">upload .vrma</button></div>
+        </div>
+      </div>
+
+      <!-- ============ ACTIONS ============ -->
+      <div class="tab" id="tab-actions">
+        <div class="sec">
+          <h3>Actions (catalog)</h3>
+          <div id="rows"></div>
+        </div>
+        <div class="sec">
+          <h3>Add action</h3>
+          <div class="field"><label>tag</label><input type="text" id="na-tag" placeholder="e.g. dance" /></div>
+          <div class="field"><label>vrma</label><select id="na-vrma"></select></div>
+          <div class="field"><label>face</label><select id="na-face">
+            <option value="">(none)</option><option>happy</option><option>angry</option>
+            <option>sad</option><option>surprised</option><option>relaxed</option></select></div>
+          <button class="b cyan" id="na-add" style="width:100%">+ add to catalog</button>
+        </div>
+        <div class="savebar"><button class="save" id="save-actions">💾 Save catalog</button></div>
+      </div>
+
+      <div id="msg"></div>
+      <div class="credit">Incarna — by <a href="https://github.com/andrewsegas" target="_blank" rel="noopener">Andrews Egas</a>
+        · <a href="https://www.linkedin.com/in/andrews-egas/" target="_blank" rel="noopener">LinkedIn</a></div>
+    </div>
+
+    <script src="js/studio.js"></script>
+  </body>
+</html>

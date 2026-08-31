@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#eaf0df">
+  <title>Pocket World Agent · 小世界共创</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="vendor/aframe.min.js"></script>
+  <script src="vendor/three-vrm.min.js"></script>
+  <script src="vendor/three-vrm-animation.min.js"></script>
+  <script src="js/components/vrm-model.js"></script>
+  <script src="js/components/vrm-anim-utils.js"></script>
+  <script src="js/components/vrm-actor.js"></script>
+  <script src="js/components/look-at-camera.js"></script>
+  <script src="js/components/world-tray.js"></script>
+  <script src="js/core/catalog.js"></script>
+  <script src="js/core/scene-store.js"></script>
+  <script src="js/core/tool-registry.js"></script>
+  <script src="js/core/agent-loop.js"></script>
+</head>
+<body>
+  <main id="lobby" aria-labelledby="hero-title">
+    <nav class="brand-row"><a class="brand" href="."><span>PW</span>Pocket World</a><span id="mode-pill" class="mode-pill">REPLAY READY</span></nav>
+    <section class="hero-copy">
+      <p class="eyebrow">QUEST WEBXR · SPATIAL CO-BUILDER</p>
+      <h1 id="hero-title">把一句想法，<br>变成眼前的小世界。</h1>
+      <p class="hero-lead">Mira 会理解你的描述，调用受限的场景工具，在可移动的 World Tray 上摆放和修改 3D 物件。你也可以亲手调整，再让她保存结果。</p>
+      <div class="hero-actions"><button id="enter-btn" class="primary">进入 MR <span>→</span></button><button id="desktop-btn" class="secondary">桌面预览</button></div>
+      <p id="xr-note" class="note">Quest Browser 使用 Passthrough MR；普通浏览器自动进入桌面 3D 模式。</p>
+    </section>
+    <section class="demo-card" aria-label="演示流程">
+      <div class="mira-orb"><span>ミ</span></div><div><strong>Mira 已准备好</strong><p>30 个许可清晰的轻量素材 · 15 个安全场景工具 · 无 API 也可演示</p></div>
+    </section>
+  </main>
+
+  <section id="workspace" aria-label="Pocket World 工作区">
+    <header class="topbar">
+      <a class="brand compact" href="."><span>PW</span>Pocket World</a>
+      <div class="scene-meta"><strong>治愈系小花园</strong><span id="object-count">0 个物件</span></div>
+      <div class="top-actions"><button id="undo-btn">撤销</button><button id="save-btn">保存</button><button id="load-btn">恢复</button></div>
+    </header>
+
+    <aside class="panel catalog-panel">
+      <div class="panel-heading"><div><p class="eyebrow">WORLD TRAY</p><h2>素材</h2></div><button id="tray-reset-btn" title="重置托盘">归位</button></div>
+      <div class="tabs"><button class="active" data-category="all">全部</button><button data-category="nature">自然</button><button data-category="furniture">家具</button><button data-category="structure">结构</button></div>
+      <div id="asset-grid" class="asset-grid" aria-live="polite"></div>
+      <button id="clear-btn" class="quiet-danger">清空托盘</button>
+    </aside>
+
+    <aside class="panel inspector-panel">
+      <div class="panel-heading"><div><p class="eyebrow">SELECTION</p><h2>检查器</h2></div></div>
+      <p id="inspector-empty" class="empty">点击或抓取一个物件，查看并精确调整它。</p>
+      <div id="inspector-form" hidden>
+        <h3 id="inspector-name"></h3><code id="inspector-id"></code>
+        <label>位置</label><div class="vector"><input id="position-0" type="number" step=".01"><input id="position-1" type="number" step=".01"><input id="position-2" type="number" step=".01"></div>
+        <label>旋转</label><div class="vector"><input id="rotation-0" type="number" step="1"><input id="rotation-1" type="number" step="1"><input id="rotation-2" type="number" step="1"></div>
+        <label>缩放</label><div class="vector"><input id="scale-0" type="number" step=".05"><input id="scale-1" type="number" step=".05"><input id="scale-2" type="number" step=".05"></div>
+        <button id="apply-transform" class="primary small">应用变换</button><button id="delete-object" class="quiet-danger">删除物件</button>
+      </div>
+      <div class="timeline-heading"><p class="eyebrow">AGENT TRACE</p><h2>执行轨迹</h2></div><ol id="timeline" class="timeline"></ol>
+    </aside>
+
+    <section class="mira-card"><div class="avatar-dot">ミ</div><div><span id="mira-state">待命</span><p id="mira-message">告诉我你想搭什么，或者先试试默认花园。</p></div></section>
+    <form id="composer" class="composer"><button id="demo-btn" type="button" class="suggestion">搭建默认花园</button><input id="prompt" aria-label="给 Mira 的指令" placeholder="例如：把左边的灯移到树旁边，树缩小一点…" autocomplete="off"><button id="mic-btn" type="button" aria-label="语音输入">●</button><button id="send-btn" class="primary" type="submit">发送</button></form>
+    <p id="boot-error" class="boot-error" hidden></p>
+  </section>
+
+  <a-scene embedded scene-grab-system webxr="requiredFeatures: local-floor; optionalFeatures: hit-test,hand-tracking,dom-overlay; overlayElement:#workspace" renderer="colorManagement:true;physicallyCorrectLights:true;antialias:true" background="color:#dfe9e6" loading-screen="enabled:false">
+    <a-entity light="type:ambient;intensity:1.2"></a-entity><a-entity light="type:directional;intensity:1.1" position="1 3 1"></a-entity>
+    <a-entity id="world-tray" world-tray position="0 .72 -1.8">
+      <a-box class="tray-base" position="0 -.04 0" width="2" height=".08" depth="1.4" color="#d5c6a1" material="roughness:.9"></a-box>
+      <a-box position="0 -.085 0" width="2.08" height=".02" depth="1.48" color="#6d806c"></a-box>
+      <a-entity id="world-objects"></a-entity>
+    </a-entity>
+    <a-entity id="mira-avatar" position=".82 0 -1.45" rotation="0 -25 0" scale=".72 .72 .72" vrm-model="src:assets/avatars/AvatarSample_B.vrm" vrm-actor look-at-camera></a-entity>
+    <a-entity id="camera-rig"><a-camera id="user-camera" position="0 1.6 0" look-controls wasd-controls="acceleration:15"></a-camera></a-entity>
+    <a-entity id="lhand" hand-tracking-controls="hand:left" oculus-touch-controls="hand:left"></a-entity><a-entity id="rhand" hand-tracking-controls="hand:right" oculus-touch-controls="hand:right"></a-entity>
+  </a-scene>
+  <script src="js/app.js"></script>
+</body>
+</html>
